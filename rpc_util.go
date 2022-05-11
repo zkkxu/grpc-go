@@ -34,6 +34,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/encoding"
+	"google.golang.org/grpc/encoding/lz4"
 	"google.golang.org/grpc/encoding/proto"
 	"google.golang.org/grpc/internal/transport"
 	"google.golang.org/grpc/metadata"
@@ -609,6 +610,11 @@ func compress(in []byte, cp Compressor, compressor encoding.Compressor) ([]byte,
 	if compressor == nil && cp == nil {
 		return nil, nil
 	}
+
+	if compressor.Name() == lz4.Name && len(in) < 4096 {
+		return nil, nil
+	}
+
 	wrapErr := func(err error) error {
 		return status.Errorf(codes.Internal, "grpc: error while compressing: %v", err.Error())
 	}
